@@ -71,7 +71,9 @@ $ docker run -d --name valkey-admin -p 8080:8080 \
 
 Runs with Application Default Credentials (Workload Identity in GKE, the metadata
 server on GCE, or a mounted `GOOGLE_APPLICATION_CREDENTIALS` key file locally).
-No password is supplied — the token is minted and rotated automatically.
+No password is supplied — the token is minted and rotated automatically. TLS with
+certificate verification is required for `gcp-iam`, so provide the instance's
+server CA via `VALKEY_CA_CERT_PATH`.
 
 ```console
 $ docker run -d --name valkey-admin -p 8080:8080 \
@@ -79,6 +81,8 @@ $ docker run -d --name valkey-admin -p 8080:8080 \
   -e VALKEY_PORT=6379 \
   -e VALKEY_AUTH_TYPE=gcp-iam \
   -e VALKEY_TLS=true \
+  -e VALKEY_CA_CERT_PATH=/etc/valkey/tls/valkey-ca.pem \
+  -v /path/to/valkey-ca.pem:/etc/valkey/tls/valkey-ca.pem:ro \
   valkey/valkey-admin
 ```
 
@@ -95,6 +99,8 @@ Here are all the relevant environment variables for configuration
 | `VALKEY_USERNAME` | Valkey username | — |
 | `VALKEY_PASSWORD` | Valkey password | — |
 | `VALKEY_TLS` | Enable TLS | `false` |
+| `VALKEY_VERIFY_CERT` | Verify the server's TLS certificate; set `false` to disable (not allowed for `gcp-iam`) | `true` |
+| `VALKEY_CA_CERT_PATH` | Path to a PEM CA cert used to verify the server's TLS certificate | — |
 | `VALKEY_AUTH_TYPE` | Authentication type (`password`, `iam`, `gcp-iam`) | `password` |
 | `HOT_KEYS_COUNT` | Maximum hot keys returned per query | `50` |
 | `COMMAND_LOGS_COUNT` | Maximum command log entries returned per query | `100` |

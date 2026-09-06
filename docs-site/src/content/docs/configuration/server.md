@@ -111,9 +111,9 @@ Enable TLS for the Valkey connection. Compared as the literal string `"true"`.
 
 ### `VALKEY_VERIFY_CERT`
 
-Verify the TLS server certificate. Compared as the literal string `"true"`. Leave this off only when you are knowingly talking to a node with a self-signed cert.
+Verify the TLS server certificate. Verification is **on** unless this is set to the literal string `"false"`. Disable it only when you knowingly talk to a node with a self-signed cert and cannot supply its CA via `VALKEY_CA_CERT_PATH`. Verification cannot be disabled for `gcp-iam` — the IAM token is a bearer credential and requires a verified TLS channel.
 
-- **Default:** `false`
+- **Default:** `true`
 
 ### `VALKEY_CA_CERT_PATH`
 

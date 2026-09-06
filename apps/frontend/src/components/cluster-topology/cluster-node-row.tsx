@@ -90,6 +90,7 @@ export function ClusterNodeRow({
     port: port.toString(),
     tls: primaryConfig.tls,
     verifyTlsCertificate: primaryConfig.verifyTlsCertificate,
+    caCertPath: primaryConfig.caCertPath,
     endpointType: "node",
     db: clusterDb,
   }

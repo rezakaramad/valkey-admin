@@ -362,6 +362,8 @@ describe("connectToValkey", () => {
         ...DEFAULT_PAYLOAD.connectionDetails,
         authType: "gcp-iam" as const,
         username: "ignored@project.iam.gserviceaccount.com",
+        tls: true,
+        verifyTlsCertificate: true,
         password: undefined,
       },
     }
@@ -375,6 +377,53 @@ describe("connectToValkey", () => {
       assert.strictEqual(config.credentials.password, "fake-gcp-token")
       assert.strictEqual(config.credentials.username, "default")
       assert.strictEqual(config.credentials.iamConfig, undefined)
+    })
+  })
+
+  it("rejects gcp-iam without TLS instead of sending the token in cleartext", async () => {
+    const standalone = buildStandaloneMock({ clusterEnabled: "1" })
+    const cluster = buildClusterMock()
+    mock.method(GoogleAuth.prototype, "getAccessToken", async () => "fake-gcp-token")
+
+    const insecurePayload = {
+      ...DEFAULT_PAYLOAD,
+      connectionDetails: {
+        ...DEFAULT_PAYLOAD.connectionDetails,
+        authType: "gcp-iam" as const,
+        tls: false,
+        password: undefined,
+      },
+    }
+
+    await withMockedClients(standalone, cluster, async () => {
+      const result = await connectToValkey(ctx(), mockWs, insecurePayload)
+      assert.strictEqual(result, undefined)
+      assert.strictEqual((GlideClusterClient.createClient as any).mock.calls.length, 0)
+      assert.strictEqual((GlideClient.createClient as any).mock.calls.length, 0)
+    })
+  })
+
+  it("rejects gcp-iam when certificate verification is disabled", async () => {
+    const standalone = buildStandaloneMock({ clusterEnabled: "1" })
+    const cluster = buildClusterMock()
+    mock.method(GoogleAuth.prototype, "getAccessToken", async () => "fake-gcp-token")
+
+    const insecurePayload = {
+      ...DEFAULT_PAYLOAD,
+      connectionDetails: {
+        ...DEFAULT_PAYLOAD.connectionDetails,
+        authType: "gcp-iam" as const,
+        tls: true,
+        verifyTlsCertificate: false,
+        password: undefined,
+      },
+    }
+
+    await withMockedClients(standalone, cluster, async () => {
+      const result = await connectToValkey(ctx(), mockWs, insecurePayload)
+      assert.strictEqual(result, undefined)
+      assert.strictEqual((GlideClusterClient.createClient as any).mock.calls.length, 0)
+      assert.strictEqual((GlideClient.createClient as any).mock.calls.length, 0)
     })
   })
 

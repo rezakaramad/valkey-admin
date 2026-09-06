@@ -182,7 +182,7 @@ async function createClient(connectionDetails: ConnectionDetails) {
         },
       }
       : authType === "gcp-iam"
-        ? { username: "default", password: await mintGcpAccessToken() }
+        ? { username: "default", password: await mintGcpAccessToken(tls, verifyTlsCertificate) }
         : password ? { username, password } : undefined
 
   return await createOrchestratorValkeyClient({ addresses, credentials, useTLS: tls, verifyTlsCertificate, caCertPath, databaseId: db })

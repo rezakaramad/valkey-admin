@@ -185,23 +185,23 @@ async function connectToValkeyLocked(
       port: Number(port),
     },
   ]
-  const credentials: ServerCredentials | undefined =
-    authType === "iam"
-      ? {
-        username: username!,
-        iamConfig: {
-          clusterName: awsReplicationGroupId!,
-          service: ServiceType.Elasticache,
-          region: awsRegion!,
-        },
-      }
-      : authType === "gcp-iam"
-        ? { username: "default", password: await mintGcpAccessToken() }
-        : password ? { username, password } : undefined
-
   let standaloneClient: GlideClient | undefined
 
   try {
+    const credentials: ServerCredentials | undefined =
+      authType === "iam"
+        ? {
+          username: username!,
+          iamConfig: {
+            clusterName: awsReplicationGroupId!,
+            service: ServiceType.Elasticache,
+            region: awsRegion!,
+          },
+        }
+        : authType === "gcp-iam"
+          ? { username: "default", password: await mintGcpAccessToken(useTLS, verifyTlsCertificate) }
+          : password ? { username, password } : undefined
+
     if (!isValidDatabaseIndex(db)) {
       throw new ConnectionRejectedError(
         "Invalid Database_Index: must be a non-negative integer",
@@ -492,22 +492,23 @@ export async function discoverTopology(
   } = connectionDetails
 
   const addresses = [{ host, port: Number(port) }]
-  const credentials: ServerCredentials | undefined =
-    authType === "iam"
-      ? {
-        username: username!,
-        iamConfig: {
-          clusterName: awsReplicationGroupId!,
-          service: ServiceType.Elasticache,
-          region: awsRegion!,
-        },
-      }
-      : authType === "gcp-iam"
-        ? { username: "default", password: await mintGcpAccessToken() }
-        : password ? { username, password } : undefined
 
   let client: GlideClient | undefined
   try {
+    const credentials: ServerCredentials | undefined =
+      authType === "iam"
+        ? {
+          username: username!,
+          iamConfig: {
+            clusterName: awsReplicationGroupId!,
+            service: ServiceType.Elasticache,
+            region: awsRegion!,
+          },
+        }
+        : authType === "gcp-iam"
+          ? { username: "default", password: await mintGcpAccessToken(useTLS, verifyTlsCertificate) }
+          : password ? { username, password } : undefined
+
     // Cluster discovery is read-only `CLUSTER SLOTS` against the seed node;
     // database selection is irrelevant for cluster commands. Skip
     // `databaseId` entirely so Glide does not issue `SELECT` (cluster nodes

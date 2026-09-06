@@ -13,6 +13,17 @@ class GcpIAMProvider {
   }
 
   async getCredentials() {
+    // The token is an OAuth2 bearer credential; refuse to mint it for a transport
+    // that could leak it (plaintext, or TLS without certificate verification).
+    if (process.env.VALKEY_TLS !== "true") {
+      throw new Error("GCP IAM authentication requires TLS. Set VALKEY_TLS=true.")
+    }
+    if (process.env.VALKEY_VERIFY_CERT === "false") {
+      throw new Error(
+        "GCP IAM authentication requires TLS certificate verification. "
+          + "Do not disable VALKEY_VERIFY_CERT; provide the server CA via VALKEY_CA_CERT_PATH instead.",
+      )
+    }
     const token = await this.#auth.getAccessToken()
     if (!token) {
       throw new Error("Unable to mint a GCP access token from Application Default Credentials")
