@@ -37,6 +37,7 @@ async function main() {
   // GCP OAuth2 tokens expire ~1h; rotate the connection password before then so
   // reconnects keep authenticating. AWS IAM refreshes natively inside Glide.
   let gcpRetryTimer
+  let gcpRetryUsedThisInterval = false
   const refreshGcpToken = async () => {
     try {
       await client.updateConnectionPassword(await new GcpIAMProvider().getCredentials(), true)
@@ -47,9 +48,10 @@ async function main() {
       }
     } catch (err) {
       console.error("[gcp-iam] token refresh error:", err.message)
-      // Retry sooner than the next interval so a fresh token lands before the
-      // ~1h token expires and reconnects start failing.
-      if (!gcpRetryTimer) {
+      // At most one retry per interval so persistent ADC failures don't spin;
+      // it lands a fresh token before the ~1h token expires and reconnects fail.
+      if (!gcpRetryUsedThisInterval && !gcpRetryTimer) {
+        gcpRetryUsedThisInterval = true
         gcpRetryTimer = setTimeout(() => {
           gcpRetryTimer = undefined
           refreshGcpToken()
@@ -59,7 +61,10 @@ async function main() {
     }
   }
   const gcpTokenRefresh = process.env.VALKEY_AUTH_TYPE === "gcp-iam"
-    ? setInterval(refreshGcpToken, 45 * 60 * 1000)
+    ? setInterval(() => {
+      gcpRetryUsedThisInterval = false
+      refreshGcpToken()
+    }, 45 * 60 * 1000)
     : undefined
   gcpTokenRefresh?.unref?.()
 

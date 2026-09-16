@@ -14,6 +14,8 @@ type RefreshableClient = GlideClient | GlideClusterClient
 
 const refreshTimers = new Map<RefreshableClient, NodeJS.Timeout>()
 const retryTimers = new Map<RefreshableClient, NodeJS.Timeout>()
+// Clients whose current interval has already consumed its single retry.
+const retryUsed = new Set<RefreshableClient>()
 
 function clearRetry(client: RefreshableClient): void {
   const retry = retryTimers.get(client)
@@ -29,8 +31,10 @@ function scheduleRetry(
   useTLS: boolean,
   verifyTlsCertificate: boolean,
 ): void {
-  // Skip if the client was unregistered or a retry is already pending.
-  if (!refreshTimers.has(client) || retryTimers.has(client)) return
+  // At most one retry per interval: skip if unregistered, already retried this
+  // interval, or a retry is already pending.
+  if (!refreshTimers.has(client) || retryUsed.has(client) || retryTimers.has(client)) return
+  retryUsed.add(client)
   const retry = setTimeout(() => {
     retryTimers.delete(client)
     void refreshToken(client, label, useTLS, verifyTlsCertificate)
@@ -73,6 +77,8 @@ export function registerGcpTokenRefresh(
   if (refreshTimers.has(client)) return
 
   const timer = setInterval(() => {
+    // Each interval gets a fresh retry budget.
+    retryUsed.delete(client)
     void refreshToken(client, label, useTLS, verifyTlsCertificate)
   }, REFRESH_INTERVAL_MS)
 
@@ -88,4 +94,5 @@ export function unregisterGcpTokenRefresh(client: RefreshableClient): void {
     refreshTimers.delete(client)
   }
   clearRetry(client)
+  retryUsed.delete(client)
 }
