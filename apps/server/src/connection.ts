@@ -554,6 +554,9 @@ function updateClusterNodesClient(
     .filter(([, entry]) => entry.client === existingClusterConnection.client)
     .map(([id]) => id)
 
+  // Stop the GCP IAM token-refresh timer before closing so the stale client is
+  // released immediately rather than lingering until the next refresh interval.
+  unregisterGcpTokenRefresh(existingClusterConnection.client)
   try { existingClusterConnection.client.close() } catch (error) {
     console.error(`Error closing stale client for ${existingClusterConnection.clusterId}:`, error)
   }
