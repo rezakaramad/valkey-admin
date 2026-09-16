@@ -45,6 +45,16 @@ export const createValkeyClient = async (cfg = {}) => {
         } : undefined
 
   const useTLS = process.env.VALKEY_TLS === "true"
+  // The GCP IAM token is a bearer credential, so it must never travel over an
+  // unverified TLS channel. Refuse insecure TLS for gcp-iam regardless of
+  // VALKEY_VERIFY_CERT (mirrors the guard in GcpIAMProvider.getCredentials()).
+  const isGcpIam = process.env.VALKEY_AUTH_TYPE === "gcp-iam"
+  if (isGcpIam && (!useTLS || process.env.VALKEY_VERIFY_CERT === "false")) {
+    throw new Error(
+      "GCP IAM authentication requires TLS with certificate verification. "
+        + "Set VALKEY_TLS=true, do not disable VALKEY_VERIFY_CERT, and provide the server CA via VALKEY_CA_CERT_PATH.",
+    )
+  }
   // Glide's TLS runs in its Rust core, so a custom CA must be passed explicitly
   // via `rootCertificates` (Node's trust store / NODE_EXTRA_CA_CERTS do not apply).
   const caCertPath = process.env.VALKEY_CA_CERT_PATH

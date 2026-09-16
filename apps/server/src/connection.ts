@@ -372,7 +372,7 @@ async function connectToValkeyLocked(
         }
 
         shouldCloseClusterClientOnError = false
-        if (authType === "gcp-iam") registerGcpTokenRefresh(clusterClient, `cluster ${clusterId}`)
+        if (authType === "gcp-iam") registerGcpTokenRefresh(clusterClient, `cluster ${clusterId}`, useTLS, verifyTlsCertificate)
         return clusterClient
       } finally {
         if (ownInflight && inFlightClusterClients.get(clusterId) === ownInflight) {
@@ -438,7 +438,7 @@ async function connectToValkeyLocked(
       },
     })
 
-    if (authType === "gcp-iam") registerGcpTokenRefresh(standaloneClient, connectionId)
+    if (authType === "gcp-iam") registerGcpTokenRefresh(standaloneClient, connectionId, useTLS, verifyTlsCertificate)
     return standaloneClient
     
   } catch (err) {

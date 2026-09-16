@@ -14,12 +14,17 @@ const refreshTimers = new Map<RefreshableClient, NodeJS.Timeout>()
 // Keyed by the client instance so shared cluster clients are only scheduled once; the timer
 // self-clears once the client is closed (updateConnectionPassword throws ClosingError),
 // so callers do not have to unregister at every close site.
-export function registerGcpTokenRefresh(client: RefreshableClient, label: string): void {
+export function registerGcpTokenRefresh(
+  client: RefreshableClient,
+  label: string,
+  useTLS: boolean,
+  verifyTlsCertificate: boolean,
+): void {
   if (refreshTimers.has(client)) return
 
   const timer = setInterval(async () => {
     try {
-      const token = await mintGcpAccessToken()
+      const token = await mintGcpAccessToken(useTLS, verifyTlsCertificate)
       await client.updateConnectionPassword(token, true)
     } catch (error) {
       if (error instanceof ClosingError) {

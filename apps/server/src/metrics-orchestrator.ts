@@ -159,7 +159,12 @@ export async function getInitialClient() {
   if (!initialClient) {
     initialClient = await createClient(initialConnectionDetails)
     if (initialConnectionDetails.authType === "gcp-iam") {
-      registerGcpTokenRefresh(initialClient, "orchestrator")
+      registerGcpTokenRefresh(
+        initialClient,
+        "orchestrator",
+        initialConnectionDetails.tls,
+        initialConnectionDetails.verifyTlsCertificate,
+      )
     }
   }
   return initialClient
