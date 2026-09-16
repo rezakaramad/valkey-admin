@@ -8,7 +8,10 @@ import { GcpIAMProvider } from "../utils/gcp-iam-provider.js"
 function getConnectionOptions() {
   const host = process.env.VALKEY_HOST
   const port = Number(process.env.VALKEY_PORT)
-  const username = process.env.VALKEY_USERNAME
+  // GCP IAM authenticates as the fixed "default" user; any other username is rejected.
+  const username = process.env.VALKEY_AUTH_TYPE === "gcp-iam"
+    ? "default"
+    : process.env.VALKEY_USERNAME
   const verifyTlsCertificate = process.env.VALKEY_VERIFY_CERT
   let tls = undefined
   if (process.env.VALKEY_TLS === "true") {
