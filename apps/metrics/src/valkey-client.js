@@ -1,6 +1,9 @@
 import { GlideClient, GlideClusterClient, ServiceType, NodeDiscoveryMode } from "@valkey/valkey-glide"
 import { readFileSync } from "node:fs"
 import { GcpIAMProvider } from "./utils/gcp-iam-provider.js"
+import { APP_VERSION ,deploymentSuffix } from "valkey-common"
+
+const clientInfoTag = `valkey-admin-metrics-${deploymentSuffix()}:${APP_VERSION}`
 
 const SUPPORTED_VALKEY_MODES = new Set(["standalone", "cluster"])
 
@@ -69,6 +72,7 @@ export const createValkeyClient = async (cfg = {}) => {
     addresses,
     credentials,
     useTLS,
+    clientInfoTag,
     advancedConfiguration: {
       ...(tlsAdvancedConfiguration && { tlsAdvancedConfiguration }),
       connectionTimeout: 30000,
