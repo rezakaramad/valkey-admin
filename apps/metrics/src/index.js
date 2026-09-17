@@ -17,7 +17,7 @@ import { sanitizeUrl } from "./utils/helpers.js"
 import { buildPingRequest, buildRegisterRequest, readOrchestratorKey } from "./utils/orchestrator-auth.js"
 import { setupNdjsonCleaner, stopNdjsonCleaner } from "./effects/ndjson-cleaner.js"
 import { createValkeyClient } from "./valkey-client.js"
-import { GcpIAMProvider } from "./utils/gcp-iam-provider.js"
+import { registerGcpTokenRefresh, unregisterGcpTokenRefresh } from "valkey-common"
 import { scanBigKeys } from "./analyzers/scan-big-keys.js"
 
 async function main() {
@@ -36,37 +36,14 @@ async function main() {
 
   // GCP OAuth2 tokens expire ~1h; rotate the connection password before then so
   // reconnects keep authenticating. AWS IAM refreshes natively inside Glide.
-  let gcpRetryTimer
-  let gcpRetryUsedThisInterval = false
-  const refreshGcpToken = async () => {
-    try {
-      await client.updateConnectionPassword(await new GcpIAMProvider().getCredentials(), true)
-      // Success: drop any retry queued by an earlier failure.
-      if (gcpRetryTimer) {
-        clearTimeout(gcpRetryTimer)
-        gcpRetryTimer = undefined
-      }
-    } catch (err) {
-      console.error("[gcp-iam] token refresh error:", err.message)
-      // At most one retry per interval so persistent ADC failures don't spin;
-      // it lands a fresh token before the ~1h token expires and reconnects fail.
-      if (!gcpRetryUsedThisInterval && !gcpRetryTimer) {
-        gcpRetryUsedThisInterval = true
-        gcpRetryTimer = setTimeout(() => {
-          gcpRetryTimer = undefined
-          refreshGcpToken()
-        }, 5 * 60 * 1000)
-        gcpRetryTimer.unref?.()
-      }
-    }
+  if (process.env.VALKEY_AUTH_TYPE === "gcp-iam") {
+    registerGcpTokenRefresh(
+      client,
+      "metrics",
+      process.env.VALKEY_TLS === "true",
+      process.env.VALKEY_VERIFY_CERT !== "false",
+    )
   }
-  const gcpTokenRefresh = process.env.VALKEY_AUTH_TYPE === "gcp-iam"
-    ? setInterval(() => {
-      gcpRetryUsedThisInterval = false
-      refreshGcpToken()
-    }, 45 * 60 * 1000)
-    : undefined
-  gcpTokenRefresh?.unref?.()
 
   await setupNdjsonCleaner(cfg)
   await setupCollectors(client, cfg)
@@ -282,8 +259,7 @@ async function main() {
     try {
       await stopNdjsonCleaner()
       await stopCollectors()
-      if (gcpTokenRefresh) clearInterval(gcpTokenRefresh)
-      if (gcpRetryTimer) clearTimeout(gcpRetryTimer)
+      unregisterGcpTokenRefresh(client)
       if (client) {
         client.close()
       }

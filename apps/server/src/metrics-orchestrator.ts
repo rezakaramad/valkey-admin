@@ -28,13 +28,13 @@ import {
   resolveOrchestratorAuthWindowMs,
   sanitizeUrl,
   toNodeId,
-  verifyOrchestratorAuthCredential
+  verifyOrchestratorAuthCredential,
+  mintGcpAccessToken,
+  registerGcpTokenRefresh
 } from "valkey-common"
 import { discoverCluster, belongsToCluster } from "./connection"
 import { ConnectionDetails } from "./actions/connection"
 import { createOrchestratorValkeyClient } from "./valkey-client"
-import { mintGcpAccessToken } from "./gcp-iam-provider"
-import { registerGcpTokenRefresh } from "./iam-token-refresh"
 
 // Assumes nodeId is unique among all clusters
 export type MetricsServerMap = Map<string,

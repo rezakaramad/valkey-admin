@@ -3,6 +3,7 @@ import * as R from "ramda"
 import WebSocket from "ws"
 import { VALKEY } from "valkey-common"
 import { buildConnectionId, isValidDatabaseIndex, sanitizeUrl, toNodeId, buildUrl } from "valkey-common"
+import { mintGcpAccessToken, registerGcpTokenRefresh, unregisterGcpTokenRefresh } from "valkey-common"
 import { KeyEvictionPolicy } from "common/dist"
 import { 
   getExistingClusterClient, 
@@ -27,8 +28,6 @@ import { subscribe } from "./node-watchers"
 import { clearCpuSamples } from "./node-utilization"
 import { createClusterValkeyClient, createStandaloneValkeyClient } from "./valkey-client"
 import { isConnectionAuthorized } from "./session"
-import { mintGcpAccessToken } from "./gcp-iam-provider"
-import { registerGcpTokenRefresh, unregisterGcpTokenRefresh } from "./iam-token-refresh"
 
 export type ConnectionContext = {
   clients: Map<string, { client: GlideClient | GlideClusterClient; clusterId?: string }>
