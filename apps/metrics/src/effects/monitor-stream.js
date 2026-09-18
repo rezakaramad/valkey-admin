@@ -2,8 +2,8 @@ import { Subject, timer, race, firstValueFrom, defer, of } from "rxjs"
 import { exhaustMap, catchError, map } from "rxjs"
 import Valkey from "iovalkey"
 import { readFileSync } from "node:fs"
-import { ElastiCacheIAMProvider } from "../utils/elasticache-iam-provider.js"
 import { mintGcpAccessToken } from "valkey-common"
+import { ElastiCacheIAMProvider } from "../utils/elasticache-iam-provider.js"
 
 function getConnectionOptions() {
   const host = process.env.VALKEY_HOST

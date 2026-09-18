@@ -1,6 +1,7 @@
 import fs from "node:fs"
 import express from "express"
 import { ORCHESTRATOR_AUTH_KEY_ENV, buildUrl } from "valkey-common"
+import { registerGcpTokenRefresh, unregisterGcpTokenRefresh } from "valkey-common"
 import { getConfig } from "./config.js"
 import * as Streamer from "./effects/ndjson-streamer.js"
 import { setupCollectors, stopCollectors } from "./init-collectors.js"
@@ -17,7 +18,6 @@ import { sanitizeUrl } from "./utils/helpers.js"
 import { buildPingRequest, buildRegisterRequest, readOrchestratorKey } from "./utils/orchestrator-auth.js"
 import { setupNdjsonCleaner, stopNdjsonCleaner } from "./effects/ndjson-cleaner.js"
 import { createValkeyClient } from "./valkey-client.js"
-import { registerGcpTokenRefresh, unregisterGcpTokenRefresh } from "valkey-common"
 import { scanBigKeys } from "./analyzers/scan-big-keys.js"
 
 async function main() {
