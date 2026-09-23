@@ -174,8 +174,11 @@ async function connectToValkeyLocked(
 
   const {
     host, port, username, password, tls: useTLS,
-    verifyTlsCertificate, caCertPath, authType, awsRegion, awsReplicationGroupId,
+    verifyTlsCertificate, authType, awsRegion, awsReplicationGroupId,
   } = payload.connectionDetails
+  // VALKEY_CA_CERT_PATH is a server-side default: the UI has no CA field, so a
+  // UI-initiated connection can only get a private CA from the environment.
+  const caCertPath = payload.connectionDetails.caCertPath ?? process.env.VALKEY_CA_CERT_PATH
 
   const db = payload.connectionDetails.db
 
@@ -489,8 +492,11 @@ export async function discoverTopology(
   const { discoveryId, connectionDetails } = payload
   const {
     host, port, username, password, tls: useTLS,
-    verifyTlsCertificate, caCertPath, authType, awsRegion, awsReplicationGroupId,
+    verifyTlsCertificate, authType, awsRegion, awsReplicationGroupId,
   } = connectionDetails
+  // VALKEY_CA_CERT_PATH is a server-side default: the UI has no CA field, so a
+  // UI-initiated discovery can only get a private CA from the environment.
+  const caCertPath = connectionDetails.caCertPath ?? process.env.VALKEY_CA_CERT_PATH
 
   const addresses = [{ host, port: Number(port) }]
 
