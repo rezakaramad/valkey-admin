@@ -178,7 +178,8 @@ async function connectToValkeyLocked(
   } = payload.connectionDetails
   // VALKEY_CA_CERT_PATH is a server-side default: the UI has no CA field, so a
   // UI-initiated connection can only get a private CA from the environment.
-  const caCertPath = payload.connectionDetails.caCertPath ?? process.env.VALKEY_CA_CERT_PATH
+  // An empty persisted value counts as missing, hence `||` not `??`.
+  const caCertPath = payload.connectionDetails.caCertPath || process.env.VALKEY_CA_CERT_PATH
 
   const db = payload.connectionDetails.db
 
@@ -496,7 +497,8 @@ export async function discoverTopology(
   } = connectionDetails
   // VALKEY_CA_CERT_PATH is a server-side default: the UI has no CA field, so a
   // UI-initiated discovery can only get a private CA from the environment.
-  const caCertPath = connectionDetails.caCertPath ?? process.env.VALKEY_CA_CERT_PATH
+  // An empty persisted value counts as missing, hence `||` not `??`.
+  const caCertPath = connectionDetails.caCertPath || process.env.VALKEY_CA_CERT_PATH
 
   const addresses = [{ host, port: Number(port) }]
 

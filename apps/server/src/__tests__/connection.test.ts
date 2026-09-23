@@ -461,6 +461,7 @@ describe("connectToValkey", () => {
     const cluster = buildClusterMock()
     const caPath = path.join(os.tmpdir(), `valkey-ca-env-${process.pid}-${Date.now()}.pem`)
     fs.writeFileSync(caPath, "-----BEGIN CERTIFICATE-----\nenvca\n-----END CERTIFICATE-----\n")
+    const priorCaCertPath = process.env.VALKEY_CA_CERT_PATH
     process.env.VALKEY_CA_CERT_PATH = caPath
 
     // The UI has no CA field, so a UI-initiated payload carries no caCertPath.
@@ -483,7 +484,8 @@ describe("connectToValkey", () => {
         assert.match(ca.toString(), /envca/)
       })
     } finally {
-      delete process.env.VALKEY_CA_CERT_PATH
+      if (priorCaCertPath === undefined) delete process.env.VALKEY_CA_CERT_PATH
+      else process.env.VALKEY_CA_CERT_PATH = priorCaCertPath
       fs.rmSync(caPath, { force: true })
     }
   })
