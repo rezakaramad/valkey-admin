@@ -23,7 +23,8 @@ import {
   reconcileClusterMetricsServers, 
   isKubernetes, 
   forgetCollectorKey,
-  ClusterNodeMap } from "./metrics-orchestrator"
+  ClusterNodeMap,
+  type NodeInfo } from "./metrics-orchestrator"
 import { subscribe } from "./node-watchers"
 import { clearCpuSamples } from "./node-utilization"
 import { createClusterValkeyClient, createStandaloneValkeyClient } from "./valkey-client"
@@ -240,7 +241,7 @@ async function connectToValkeyLocked(
       const existingStandalone = existingConnection.client as GlideClient
       const [keyEvictionPolicy, jsonModuleAvailable, existingDatabasesCount] = await Promise.all([
         getKeyEvictionPolicy(existingStandalone),
-        checkJsonModuleAvailability(existingStandalone),
+        checkJsonModuleAvailability(existingStandalone, connectionId),
         getDatabasesCount(existingStandalone),
       ])
       sendStandaloneConnectFulfilled(ws, {
@@ -427,7 +428,7 @@ async function connectToValkeyLocked(
 
     const [keyEvictionPolicy, jsonModuleAvailable] = await Promise.all([
       getKeyEvictionPolicy(standaloneClient),
-      checkJsonModuleAvailability(standaloneClient),
+      checkJsonModuleAvailability(standaloneClient, connectionId),
     ])
     sendStandaloneConnectFulfilled(ws, {
       connectionId,
@@ -574,7 +575,7 @@ async function commitClusterConnection(
   const [clusterSlotStatsEnabled, keyEvictionPolicy, jsonModuleAvailable, databasesCount] = await Promise.all([
     getClusterSlotStatsEnabled(clusterClient),
     getKeyEvictionPolicy(clusterClient),
-    checkJsonModuleAvailability(clusterClient),
+    checkJsonModuleAvailability(clusterClient, connectionId),
     getDatabasesCount(clusterClient, ["cluster-databases", "databases"]),
   ])
 
@@ -609,7 +610,7 @@ function sendStandaloneConnectFulfilled(ws: WebSocket, payload: StandaloneConnec
 
 export async function discoverCluster(
   client: GlideClient | GlideClusterClient, 
-  payload: { connectionDetails: ConnectionDetails, connectionId?: string;},
+  payload: { connectionDetails: NodeInfo, connectionId?: string;},
 )  {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
